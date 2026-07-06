@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/decisionhub
+    username: decisionhub_app
+    password: dh_dev_sec_pwd_2026
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration/postgresql
+  
+  ai:
+    vertex:
+      gemini:
+        enabled: true
+        project-id: decisionhub-dev-proj
+        location: us-central1
+        model: gemini-1.5-pro
+
+# Security properties
+security:
+  jwt:
+    secret: 9a4f2c8d3e7b1a5c6f8e9d0b3c2a1f4e7d8c9b0a3f2e1d5c6b7a8f9e0d1c2b3a
+    expiration-ms: 900000 # 15 minutes
+    refresh-expiration-ms: 604800000 # 7 days
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    com.decisionhub: DEBUG
+    org.springframework.security: INFO

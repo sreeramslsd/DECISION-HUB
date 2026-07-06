@@ -1,0 +1,547 @@
+openapi: 3.0.3
+info:
+  title: DecisionHub API
+  description: Collaborative Decision-Making & Community Polling Platform Backend
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Development Server
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      operationId: registerUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input or user already exists
+
+  /auth/login:
+    post:
+      summary: Authenticate user and return JWT tokens
+      operationId: loginUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/refresh:
+    post:
+      summary: Refresh JWT token using Refresh Token
+      operationId: refreshTokens
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Invalid or expired refresh token
+
+  /auth/logout:
+    post:
+      summary: Revoke refresh token and logout
+      operationId: logoutUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+      responses:
+        '204':
+          description: Logged out successfully
+
+  /decisions:
+    post:
+      summary: Create a new decision board
+      operationId: createDecision
+      tags:
+        - Decisions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        '201':
+          description: Decision board created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResponse'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+
+    get:
+      summary: Get list of decision boards with filtering
+      operationId: getDecisions
+      tags:
+        - Decisions
+      parameters:
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, CLOSED]
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of decisions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DecisionResponse'
+                  totalPages:
+                    type: integer
+                  totalElements:
+                    type: integer
+
+  /decisions/{id}:
+    get:
+      summary: Retrieve decision details (options, criteria, etc.)
+      operationId: getDecisionById
+      tags:
+        - Decisions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Decision details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResponse'
+        '404':
+          description: Decision not found
+
+  /decisions/{id}/votes:
+    post:
+      summary: Submit or update vote for a decision
+      operationId: castVote
+      tags:
+        - Voting
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+      responses:
+        '201':
+          description: Vote recorded successfully
+        '400':
+          description: Voting closed, already voted, or invalid option
+        '401':
+          description: Unauthorized
+
+  /decisions/{id}/comments:
+    post:
+      summary: Add a comment to a decision board
+      operationId: addComment
+      tags:
+        - Comments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+      responses:
+        '201':
+          description: Comment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+
+  /decisions/{id}/ai-recommendation:
+    get:
+      summary: Get or trigger Gemini recommendation for decision
+      operationId: getAiRecommendation
+      tags:
+        - AI Recommendations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recommendation summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiRecommendationResponse'
+        '202':
+          description: Recommendation compilation initiated (asynchronous processing)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserRegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    UserLoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          default: Bearer
+        expiresIn:
+          type: integer
+
+    TokenRefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+        avatarUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    DecisionRequest:
+      type: object
+      required:
+        - title
+        - votingType
+        - options
+      properties:
+        title:
+          type: string
+          minLength: 5
+          maxLength: 255
+        description:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+        communityId:
+          type: string
+          format: uuid
+        isPublic:
+          type: boolean
+          default: true
+        votingType:
+          type: string
+          enum: [SINGLE_CHOICE, MULTIPLE_CHOICE, RATING_BASED]
+        anonymityType:
+          type: string
+          enum: [PUBLIC, ANONYMOUS]
+          default: PUBLIC
+        deadline:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        options:
+          type: array
+          minItems: 2
+          items:
+            $ref: '#/components/schemas/OptionCreateDto'
+
+    OptionCreateDto:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaDto'
+
+    CriteriaDto:
+      type: object
+      required:
+        - criterionName
+        - score
+      properties:
+        criterionName:
+          type: string
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        remarks:
+          type: string
+
+    DecisionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        creator:
+          $ref: '#/components/schemas/UserResponse'
+        votingType:
+          type: string
+        anonymityType:
+          type: string
+        status:
+          type: string
+        deadline:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptionResponseDto'
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    OptionResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaDto'
+
+    VoteRequest:
+      type: object
+      required:
+        - optionId
+      properties:
+        optionId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Required only if votingType is RATING_BASED
+
+    CommentRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+        parentCommentId:
+          type: string
+          format: uuid
+
+    CommentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        decisionId:
+          type: string
+          format: uuid
+        author:
+          $ref: '#/components/schemas/UserResponse'
+        content:
+          type: string
+        parentCommentId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    AiRecommendationResponse:
+      type: object
+      properties:
+        decisionId:
+          type: string
+          format: uuid
+        pros:
+          type: string
+        cons:
+          type: string
+        risks:
+          type: string
+        suggestions:
+          type: string
+        recommendation:
+          type: string
+        reasoning:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
