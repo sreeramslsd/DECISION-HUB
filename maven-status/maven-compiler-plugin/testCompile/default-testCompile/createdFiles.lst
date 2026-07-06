@@ -1,0 +1,7 @@
+com\decisionhub\controller\DecisionControllerTest.class
+com\decisionhub\controller\AuthControllerTest.class
+com\decisionhub\security\AuthenticationIntegrationTest.class
+com\decisionhub\security\DecisionIntegrationTest.class
+com\decisionhub\security\CommunityIntegrationTest.class
+com\decisionhub\controller\CommunityControllerTest.class
+com\decisionhub\security\JwtTokenProviderTest.class

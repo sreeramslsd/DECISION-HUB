@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.decisionhub.controller.AuthControllerTest
+-------------------------------------------------------------------------------
+Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.341 s -- in com.decisionhub.controller.AuthControllerTest
