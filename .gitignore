@@ -1,0 +1,39 @@
+# Target build directory
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+pom.xml.versionsBackup
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE specific files
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+bin/
+dependency-analysis.json
+
+# Log files
+*.log
+logs/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Docker files
+.docker/
+
+# Environment files
+.env
+.env.local
