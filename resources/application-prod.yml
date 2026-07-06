@@ -1,0 +1,52 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres-prod:5432/decisionhub}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 30000
+      connection-timeout: 20000
+      max-lifetime: 1800000
+      pool-name: DecisionHubHikariPool
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    locations: classpath:db/migration/postgresql
+  
+  ai:
+    vertex:
+      gemini:
+        project-id: ${GCP_PROJECT_ID}
+        location: ${GCP_LOCATION:us-central1}
+        model: gemini-1.5-pro
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 900000 # 15 minutes
+    refresh-expiration-ms: 2592000000 # 30 days
+
+logging:
+  level:
+    root: INFO
+    com.decisionhub: INFO
+    org.hibernate.SQL: ERROR
+    org.springframework: WARN
